@@ -1,16 +1,10 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
+import Game from './components/Game';
 import PlayerCreator from './components/PlayerCreator';
 import './App.css';
 
 class App extends Component {
-  state = {
-    players: null
-  }
-
-  componentDidMount() {
-    fetch('')
-  }
   render() {
     return (
       <div className="App">
@@ -23,6 +17,7 @@ class App extends Component {
                 <Link to={"newPlayer"}>Get Started</Link>
               </div>
             )}/>
+            <Route exact path="/game" component={Game}/>
           </main>
         </Router>
       </div>
