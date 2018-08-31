@@ -10,7 +10,9 @@ class PlayerCreator extends Component {
   }
 
   componentDidMount() {
+    console.log('cdm');
     fetch(`http://localhost:8080/game/players/`, {
+      method: 'GET',
       mode: 'cors'
     })
     .then(res => res.json())
@@ -18,8 +20,13 @@ class PlayerCreator extends Component {
   }
 
   render(){
-    console.log('render allPlayers', this.state.allPlayers);
-    console.log('render NewPlayers', this.state.newPlayers);
+    if (this.state.allPlayers == null) return null;
+
+    const currentlyPlaying = this.state.allPlayers.map(player => {
+      return (<li key={player.externalId}>{player.name}</li>)
+    })
+    console.log('render CurrentlyPlaying', currentlyPlaying);
+
     const handleNameChange = e => {
       this.setState({name: e.target.value})
     }
@@ -48,7 +55,13 @@ class PlayerCreator extends Component {
     <div>
       <h1>Enter your name</h1>
       <input id="name-input" type="text" name="name" onChange={handleNameChange}/>
-      <Link to="/newPlayer" onClick={handleLinkClick}>Start Game</Link>
+      <Link to="/game" onClick={handleLinkClick}>Start Game</Link>
+      <div id="currently-playing-container">
+        <p>Currently Playing...</p>
+        <ul>
+          {currentlyPlaying}
+        </ul>
+      </div>
     </div>
   )
 }

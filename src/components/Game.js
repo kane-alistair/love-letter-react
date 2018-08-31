@@ -14,9 +14,8 @@ class Game extends Component {
   }
 
   render() {
-    console.log(this.state.players);
     return (
-      <div>Test</div>
+      <div>Game</div>
     );
   }
 
