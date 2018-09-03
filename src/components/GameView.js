@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import RequestHelper from '../helpers/RequestHelper';
 
 class GameView extends Component {
   constructor(props) {
@@ -8,12 +9,14 @@ class GameView extends Component {
     }
   }
 
+  componentDidMount() {
+
+  }
+
   render() {
     if (this.state.player == null) return;
-    console.log('renderGame', this.state.player);
     return (
       <div>Welcome {this.state.player.name}</div>
-
     );
   }
 

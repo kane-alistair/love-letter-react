@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import GameView from './GameView';
+import RequestHelper from '../helpers/RequestHelper';
 import './PlayerCreator.css';
 
 class PlayerCreator extends Component {
@@ -10,12 +11,8 @@ class PlayerCreator extends Component {
   }
 
   componentDidMount() {
-    fetch(`http://localhost:8080/game/players/`, {
-      method: 'GET',
-      mode: 'cors'
-    })
-    .then(res => res.json())
-    .then(res => this.setState({allPlayers: res}));
+    const helper = new RequestHelper();
+    helper.getAllPlayers().then(res => this.setState({allPlayers: res}));
 
     const storedPlayer = localStorage.getItem('storedPlayer');
     this.setState({ newPlayer: JSON.parse(storedPlayer) });
@@ -34,44 +31,32 @@ class PlayerCreator extends Component {
 
     const handleLinkClick = e => {
       e.preventDefault()
-      fetch('http://localhost:8080/game/players/', {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: `${this.state.name}`,
-        })
-      }
-    )
-    .then(res => res.json())
-    .then(res => {
-      this.setState({ newPlayer: res })
-      localStorage.setItem('storedPlayer', JSON.stringify(res))
+      const helper = new RequestHelper();
+      helper.createNewPlayer(this.state.name)
+      .then(res => {
+        this.setState({ newPlayer: res })
+        localStorage.setItem('storedPlayer', JSON.stringify(res))
+      })
+    }
+
+    const currentlyPlaying = this.state.allPlayers.map(player => {
+      return (<li key={player.externalId}>{player.name}</li>)
     })
 
-
-  }
-
-  const currentlyPlaying = this.state.allPlayers.map(player => {
-    return (<li key={player.externalId}>{player.name}</li>)
-  })
-
-  return(
-    <div>
-      <h1>Enter your name</h1>
-      <input id="name-input" type="text" name="name" onChange={handleNameChange}/>
-      <a href="/newPlayer" onClick={handleLinkClick}>Start Game</a>
-      <div id="currently-playing-container">
-        <p>Currently Playing...</p>
-        <ul>
-          {currentlyPlaying}
-        </ul>
+    return(
+      <div>
+        <h1>Enter your name</h1>
+        <input id="name-input" type="text" name="name" onChange={handleNameChange}/>
+        <a href="/newPlayer" onClick={handleLinkClick}>Start Game</a>
+        <div id="currently-playing-container">
+          <p>Currently Playing...</p>
+          <ul>
+            {currentlyPlaying}
+          </ul>
+        </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
 };
 
 export default PlayerCreator;
