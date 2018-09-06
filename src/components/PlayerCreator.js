@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import GameView from './GameView';
+import { Redirect } from 'react-router-dom'
 import RequestHelper from '../helpers/RequestHelper';
-import './PlayerCreator.css';
+import './GameBoard.css';
 
 class PlayerCreator extends Component {
   state = {
@@ -22,7 +22,7 @@ class PlayerCreator extends Component {
 
   render(){
     console.log('pc render', this.state);
-    if (this.state.game && this.state.id > 0) return (<GameView game={this.state.game} playerId={this.state.id}/>)
+    if (this.state.id > 0) return (<Redirect to='/play'/>)
     if (this.state.game) return this.renderCreateNewPlayerForm();
     return null;
   }
@@ -36,23 +36,12 @@ class PlayerCreator extends Component {
       e.preventDefault()
       const helper = new RequestHelper();
 
-      let newId;
-      let newGameState;
-
       helper.createNewPlayer(this.state.name)
       .then(res => {
         localStorage.setItem('storedId', JSON.stringify(res))
-        newId = res
-      })
-
-      helper.getGame()
-      .then(res => {
-        newGameState = res
-      })
-
-      this.setState({
-        id: newId,
-        game: newGameState
+        this.setState({
+          id: res
+        })
       })
     }
 
