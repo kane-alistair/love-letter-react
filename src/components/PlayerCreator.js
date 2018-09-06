@@ -5,23 +5,26 @@ import './PlayerCreator.css';
 
 class PlayerCreator extends Component {
   state = {
+    id: null,
     name: null,
-    allPlayers: null,
-    newPlayer: null
+    game: null
   }
 
   componentDidMount() {
     const helper = new RequestHelper();
-    helper.getAllPlayers().then(res => this.setState({allPlayers: res}));
+    helper.getGame().then(res => this.setState({ game: res }));
 
-    const storedPlayer = localStorage.getItem('storedPlayer');
-    this.setState({ newPlayer: JSON.parse(storedPlayer) });
+    let storedId = localStorage.getItem('storedId');
+    if (storedId !== null){
+      this.setState({ id: JSON.parse(storedId) });
+    }
   }
 
   render(){
-    if (this.state.newPlayer !== null) return (<GameView newPlayer={this.state.newPlayer}/>)
-    if (this.state.allPlayers == null) return "Server down! Come back later";
-    return this.renderCreateNewPlayerForm();
+    console.log('pc render', this.state);
+    if (this.state.game && this.state.id > 0) return (<GameView game={this.state.game} playerId={this.state.id}/>)
+    if (this.state.game) return this.renderCreateNewPlayerForm();
+    return null;
   }
 
   renderCreateNewPlayerForm() {
@@ -32,16 +35,28 @@ class PlayerCreator extends Component {
     const handleLinkClick = e => {
       e.preventDefault()
       const helper = new RequestHelper();
+
+      let newId;
+      let newGameState;
+
       helper.createNewPlayer(this.state.name)
       .then(res => {
-        this.setState({ newPlayer: res })
-        localStorage.setItem('storedPlayer', JSON.stringify(res))
+        localStorage.setItem('storedId', JSON.stringify(res))
+        newId = res
+      })
+
+      helper.getGame()
+      .then(res => {
+        newGameState = res
+      })
+
+      this.setState({
+        id: newId,
+        game: newGameState
       })
     }
 
-    const currentlyPlaying = this.state.allPlayers.map(player => {
-      return (<li key={player.externalId}>{player.name}</li>)
-    })
+    const currentlyPlaying = this.state.game.players.map(player => (<li key={player.externalId}>{player.name}</li>))
 
     return(
       <div>
@@ -57,6 +72,6 @@ class PlayerCreator extends Component {
       </div>
     )
   }
-};
+}
 
 export default PlayerCreator;
