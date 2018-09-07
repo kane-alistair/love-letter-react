@@ -5,29 +5,35 @@ import { Redirect } from 'react-router-dom';
 class GameView extends Component{
   state = {
     game: null,
-    roundNumber: 0
+    roundNumber: 0,
+    user: null
   }
 
   componentDidMount() {
     const helper = new RequestHelper();
-    helper.getGame().then(res => this.setState({ game: res }))
+    const userId = parseInt(localStorage.getItem('storedId'), 0);
+    helper.getGame().then(res => {
+      this.setState({
+        game: res,
+        user: this.createUserState(userId, res)
+      })
+    })
   }
 
-  getUser(userId){
-    let foundPlayer = null;
-    for (let player of this.state.game.players){
+  createUserState(userId, game){
+    console.log('cus', game);
+    for (let player of game.players){
       if (userId === player.externalId){
-        foundPlayer = player;
+        return player
       }
     }
-    return foundPlayer;
+    return null
   }
 
   render(){
     if (this.state.game === null) return null;
-    const userId = parseInt(localStorage.getItem('storedId'), 0);
-    const user = this.getUser(userId);
-    if (user === null) return <Redirect to="/new-player"/>
+    console.log('render game', this.state);
+    if (this.state.user === null) return <Redirect to="/new-player"/>
 
     const handleNewRoundBtn = () => {
       const helper = new RequestHelper();
@@ -39,8 +45,10 @@ class GameView extends Component{
     }
 
     let roundStartBtn;
-    if (this.state.game.roundOver === true){
+    if (this.state.game.roundOver === true && this.state.game.players.length >= 2){
       roundStartBtn = (<button onClick={handleNewRoundBtn}>Start Round</button>)
+    } else if (this.state.game.players.length < 2){
+      roundStartBtn = (<p>Waiting for more players.. </p>)
     }
 
     const allPlayersList = this.state.game.players.map(player => {
@@ -51,8 +59,8 @@ class GameView extends Component{
 
     return (
       <div>
-        <h1>Welcome {user.name}</h1>
-        <p>You are holding a {user.hand[0]} and a {user.hand[1]}</p>
+        <h1>Welcome {this.state.user.name}</h1>
+        <p>You are holding a {this.state.user.hand[0]} and a {this.state.user.hand[1]}</p>
         {roundStartBtn}
         <p>The players are:</p>
         <ul>

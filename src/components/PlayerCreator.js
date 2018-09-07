@@ -5,31 +5,25 @@ import './GameBoard.css';
 
 class PlayerCreator extends Component {
   state = {
-    id: null,
     name: null,
-    game: null
+    game: null,
+    submitted: false
   }
 
   componentDidMount() {
     const helper = new RequestHelper();
     helper.getGame().then(res => this.setState({ game: res }));
-
-    let storedId = localStorage.getItem('storedId');
-    if (storedId !== null){
-      this.setState({ id: JSON.parse(storedId) });
-    }
   }
 
   render(){
-    console.log('pc render', this.state);
-    if (this.state.id > 0) return (<Redirect to='/play'/>)
+    if (this.state.submitted === true) return (<Redirect to='/play'/>)
     if (this.state.game) return this.renderCreateNewPlayerForm();
     return null;
   }
 
   renderCreateNewPlayerForm() {
     const handleNameChange = e => {
-      this.setState({name: e.target.value})
+      this.setState({ name: e.target.value })
     }
 
     const handleLinkClick = e => {
@@ -40,7 +34,7 @@ class PlayerCreator extends Component {
       .then(res => {
         localStorage.setItem('storedId', JSON.stringify(res))
         this.setState({
-          id: res
+          submitted: true
         })
       })
     }
