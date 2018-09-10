@@ -1,27 +1,48 @@
 import React, { Component } from 'react';
 import RequestHelper from '../helpers/RequestHelper'
 import { Redirect } from 'react-router-dom';
+import Stomp from 'stompjs'
+import SockJS from 'sockjs-client';
 
 class GameView extends Component{
-  state = {
-    game: null,
-    roundNumber: 0,
-    user: null
+  constructor(props){
+    super(props);
+    let stompClient;
+    var sock = new SockJS('http://localhost:8080/game');
+    stompClient = Stomp.over(sock);
+
+    this.state = {
+      game: null,
+      roundNumber: 0,
+      user: null,
+      action: stompClient
+    }
   }
 
   componentDidMount() {
+    console.log('cdm state', this.state);
     const helper = new RequestHelper();
     const userId = parseInt(localStorage.getItem('storedId'), 0);
     helper.getGame().then(res => {
       this.setState({
         game: res,
-        user: this.createUserState(userId, res)
+        user: this.findPlayer(userId, res)
+      })
+    })
+
+    this.state.action.connect({}, (frame) => {
+      console.log('connected: ' + frame);
+      this.state.action.subscribe('/topic/game', (response) => {
+        let gameState = JSON.parse(response.body)
+        this.setState({
+          game: gameState,
+          user: this.findPlayer(userId, gameState)
+        })
       })
     })
   }
 
-  createUserState(userId, game){
-    console.log('cus', game);
+  findPlayer(userId, game){
     for (let player of game.players){
       if (userId === player.externalId){
         return player
@@ -32,16 +53,21 @@ class GameView extends Component{
 
   render(){
     if (this.state.game === null) return null;
-    console.log('render game', this.state);
     if (this.state.user === null) return <Redirect to="/new-player"/>
+    console.log('render state', this.state);
+    // const handleNewRoundBtn = () => {
+    //   const helper = new RequestHelper();
+    //   const newRoundNumber = this.state.roundNumber + 1;
+    //   helper.startRound().then(res => this.setState({
+    //     roundNumber: newRoundNumber,
+    //     game: res
+    //   }))
+    // }
 
     const handleNewRoundBtn = () => {
-      const helper = new RequestHelper();
+      this.state.action.send('/app/new-round', {}, "new round")
       const newRoundNumber = this.state.roundNumber + 1;
-      helper.startRound().then(res => this.setState({
-        roundNumber: newRoundNumber,
-        game: res
-      }))
+      this.setState({roundNumber: newRoundNumber})
     }
 
     let roundStartBtn;
