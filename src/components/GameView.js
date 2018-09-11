@@ -38,6 +38,7 @@ class GameView extends Component{
           activePlayer: this.getActivePlayer(gameState)
         })
       })
+      //updates player count so start round button shows for all players
       this.state.action.send('/app/game-state')
     })
   }
@@ -62,17 +63,28 @@ class GameView extends Component{
 
     if (this.state.game === null) return null;
     if (this.state.user === null) return <Redirect to="/new-player"/>
+    console.log('render game', this.state.game);
     console.log('render state', this.state);
 
     const handleNewRoundBtn = () => {
+      console.log('hnrbtn');
       this.state.action.send('/app/new-round', {}, "new round")
       const newRoundNumber = this.state.roundNumber + 1;
       this.setState({roundNumber: newRoundNumber})
     }
 
+    if (this.state.game.roundNumber >= 1 && this.state.game.roundOver === true){
+      return (
+        <div>
+          <h2>Game Over!</h2>
+          <p>Winner is {this.state.game.prevRoundWinner}</p>
+          <button onClick={handleNewRoundBtn}>Start Round</button>
+        </div>
+      )
+    }
+
     const handleTurnBtnClick = (e) => {
       e.preventDefault();
-      console.log('htbtnclick', e.target.value);
       const cardToPlay = parseInt(e.target.value, 0)
       if (cardToPlay === 1 || cardToPlay === 2 || cardToPlay === 3 || cardToPlay === 5 || cardToPlay === 6){
         return this.setState({
@@ -86,7 +98,6 @@ class GameView extends Component{
 
     const handleClickSelected = (e) => {
       e.preventDefault();
-      console.log('hcs');
       if (this.state.cardToPlay === 1){
         return this.setState({
           selectedPlayerId: e.target.value,
@@ -101,8 +112,11 @@ class GameView extends Component{
     const handleGuessBtn = (e) => {
       e.preventDefault();
       let { user, cardToPlay, selectedPlayerId } = this.state;
-      this.setState({makeGuess: false})
+      this.setState({
+        makeGuess: false
+      })
       const guess = e.target.value;
+      console.log('guess', e);
       sendTurn(user.externalId, cardToPlay, guess, selectedPlayerId)
     }
 
@@ -121,18 +135,19 @@ class GameView extends Component{
     if (this.state.game.roundOver === true && this.state.playerCount >= 2){
       roundStartBtn = (<button onClick={handleNewRoundBtn}>Start Round</button>)
     } else if (this.state.playerCount < 2){
-      roundStartBtn = (<p>Waiting for more players.. </p>)
+      roundStartBtn = (<p>Waiting for more players... </p>)
     }
 
     const allPlayersList = this.state.game.players.map(player => {
       if (player === this.state.user) return null;
-      let activeSymbol = null;
-      if (player.activeTurn === true) activeSymbol = " *"
+      let activeSymbol, protectedStatus = null;
+      if (player.activeTurn === true) activeSymbol = " *turn*"
+      if (player.attackable === false) protectedStatus = "PROTECTED"
       if (this.state.selectPlayer) return (
-        <li key={player.externalId} onClick={handleClickSelected} value={player.externalId}>{player.name}{activeSymbol} - select a player</li>
+        <li key={player.externalId} onClick={handleClickSelected} value={player.externalId}>{player.name}{activeSymbol}{protectedStatus} - select a player</li>
       )
 
-      return (<li key={player.externalId}>{player.name}{activeSymbol}</li>)
+      return (<li key={player.externalId}>{player.name}{activeSymbol}{protectedStatus}</li>)
     })
 
     if (this.state.user.activeTurn === true){
@@ -153,22 +168,25 @@ class GameView extends Component{
     }
 
     let makeAGuess = null;
-    if (this.state.makeGuess) {
+    if (this.state.makeGuess === true) {
+      let submitBtn = (<button onClick={this.handleClickSelected}>Submit</button>)
       makeAGuess =
       (
         <form>
           <p>Make a guess..</p>
           <input type="number" max="8"/>
-          <button onClick={handleGuessBtn}>Guess</button>
+          {submitBtn}
         </form>
       )
     }
 
     let hand1, hand2 = null;
-    if (this.state.game.roundOver == false){
+    if (this.state.game.roundOver === false){
       if (this.state.user.hand[0] != null) hand1 = (`Holding: ${this.state.user.hand[0]}`)
       if (this.state.user.hand[1] != null) hand2 = (`Holding: ${this.state.user.hand[1]}`)
     }
+
+    let deckCount = (<p>Cards remaining: {this.state.game.deck.numberOfCards}</p>);
 
     return (
       <div>
@@ -179,11 +197,46 @@ class GameView extends Component{
         <ul>
           {allPlayersList}
         </ul>
-        {turnBtn}
-        {selectAPlayer}
-        {makeAGuess}
+        <div>
+          {turnBtn}
+          {selectAPlayer}
+          {makeAGuess}
+          {deckCount}
+          {/* {showPrevMove} */}
+        </div>
       </div>
     )
+
+    // let prevPlayer = null;
+    // if (this.state.game.prevMovePlayerIdCard){
+    //   prevPlayer = this.findPlayer(Object.keys(this.state.game.prevMovePlayerIdCard)[0], this.state.game)
+    // }
+    // console.log('prevPlayer', prevPlayer);
+    //
+    // let prevMove = null;
+    // if (this.state.game.prevMovePlayerIdCard){
+    //   prevMove = this.state.game.prevMovePlayerIdCard[prevPlayer.externalId]
+    // }
+    // console.log('prevmove', prevMove);
+    //
+    // let prevMoveVictim = null;
+    // if (this.state.game.prevMoveVictimIdGuess) {
+    //   prevMoveVictim = this.findPlayer(Object.keys(this.state.game.prevMoveVictimIdGuess), this.state.game) || null;
+    // }
+    // console.log('prevMoveVictim', prevMoveVictim);
+    //
+    // const prevMoveGuess = this.state.game.prevMoveVictimIdGuess || null;
+    // console.log('prevMoveVictimGuess', prevMoveGuess);
+
+    // let showPrevMove = null;
+    // if (this.state.game.prevPlayer){
+    //   showPrevMove = (
+    //     <div>
+    //       <p>{prevPlayer.name} played a {prevMove} on {prevMoveVictim.name} and guessed a {prevMoveGuess}</p>
+    //     </div>
+    //   )
+    // }
+
   }
 }
 
