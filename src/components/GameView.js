@@ -19,6 +19,7 @@ class GameView extends Component{
       guess: 0,
       user: null,
       playerCount: 0,
+      playerId: 0,
       activePlayer: null,
       selectPlayer: false,
       selectedPlayerId: null,
@@ -29,15 +30,15 @@ class GameView extends Component{
   }
 
   componentDidMount() {
-    const userId = parseInt(localStorage.getItem('storedId'), 0);
+    const storedId = localStorage.getItem('storedId')
+    this.setState({ playerId: storedId })
 
-    this.state.action.connect({}, (frame) => {
-      console.log('connected: ' + frame);
+    this.state.action.connect({}, () => {
       this.state.action.subscribe('/topic/game', (res) => {
         let gameState = JSON.parse(res.body)
         this.setState({
           game: gameState,
-          user: this.findPlayer(userId, gameState),
+          user: this.findPlayer(storedId, gameState),
           playerCount: gameState.players.length,
           activePlayer: this.getActivePlayer(gameState)
         })
@@ -47,7 +48,12 @@ class GameView extends Component{
     })
   }
 
-  getActivePlayer = (game) => {
+  componentWillUnmount() {
+    // this.state.action.send('/app/remove-player', {}, this.state.user.externalId)
+    
+  }
+
+  getActivePlayer = game => {
     for (let player of game.players){
       if (player.activeTurn === true) return player;
     }
@@ -77,7 +83,6 @@ class GameView extends Component{
   handleClickSelected = (e) => {
     e.preventDefault();
     const selectedPlayerId = parseInt(e.target.value, 0);
-    console.log('spid', selectedPlayerId);
 
     if (this.state.cardToPlay === 1){
       this.setState({
@@ -105,14 +110,13 @@ class GameView extends Component{
     }
   }
 
-  handleGuessBtn = (e) => {
+  handleGuessBtn = () => {
     let { user, cardToPlay, selectedPlayerId } = this.state;
     this.setState({
       makeGuess: false,
       selectPlayer: false
     })
 
-    console.log('submit guess', this.state.guess);
     this.sendTurn(user.externalId, cardToPlay, this.state.guess, selectedPlayerId)
   }
 
@@ -134,11 +138,9 @@ class GameView extends Component{
   }
 
   render(){
-    console.log('render game', this.state.game);
-    console.log('render state', this.state);
     if (this.state.game === null) return null;
     if (this.state.user === null) return <Redirect to="/new-player"/>
-    console.log('eh', this.state.game.roundOver);
+
     return (
       <div>
         <div>

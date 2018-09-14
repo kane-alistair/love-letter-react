@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const DeckDisplay = ({ roundOver, deckCount, hand }) => {
   if (roundOver) return null;
@@ -10,5 +11,12 @@ const DeckDisplay = ({ roundOver, deckCount, hand }) => {
     {handDisplay}
   </div>)
 };
+
+DeckDisplay.propTypes = {
+  roundOver: PropTypes.boolean,
+  deckCount: PropTypes.integer,
+  hand: PropTypes.array.isRequired
+}
+
 
 export default DeckDisplay;
