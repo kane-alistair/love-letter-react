@@ -1,27 +1,77 @@
 import React, { Component } from 'react';
-import RequestHelper from '../helpers/RequestHelper'
 import { Redirect } from 'react-router-dom';
+import Stomp from 'stompjs'
+import SockJS from 'sockjs-client';
+import PlayersList from './PlayersList';
+import UserDisplay from './UserDisplay';
+import UserActionPanel from './UserActionPanel';
+import DeckDisplay from './DeckDisplay';
 
 class GameView extends Component{
-  state = {
-    game: null,
-    roundNumber: 0,
-    user: null
+  constructor(props){
+    super(props);
+    let stompClient;
+    var sock = new SockJS('http://localhost:8080/game');
+    stompClient = Stomp.over(sock);
+
+    this.state = {
+      game: null,
+      guess: 0,
+      user: null,
+      playerCount: 0,
+      playerId: 0,
+      activePlayer: null,
+      selectPlayer: false,
+      selectedPlayerId: null,
+      makeGuess: false,
+      cardToPlay: 0,
+      action: stompClient
+    }
   }
 
   componentDidMount() {
-    const helper = new RequestHelper();
-    const userId = parseInt(localStorage.getItem('storedId'), 0);
-    helper.getGame().then(res => {
-      this.setState({
-        game: res,
-        user: this.createUserState(userId, res)
+    const storedId = localStorage.getItem('storedId')
+    this.setState({ playerId: storedId })
+
+    this.state.action.connect({}, () => {
+      this.state.action.subscribe('/topic/game', (res) => {
+        let gameState = JSON.parse(res.body)
+        this.setState({
+          game: gameState,
+          user: this.findPlayer(storedId, gameState),
+          playerCount: gameState.players.length,
+          activePlayer: this.getActivePlayer(gameState)
+        })
       })
+      //updates player count so start round button shows for all players
+      this.state.action.send('/app/game-state')
     })
   }
 
-  createUserState(userId, game){
-    console.log('cus', game);
+  componentWillUnmount() {
+    // this.state.action.send('/app/remove-player', {}, this.state.user.externalId)
+    
+  }
+
+  getActivePlayer = game => {
+    for (let player of game.players){
+      if (player.activeTurn === true) return player;
+    }
+  }
+
+  sendTurn = (id, cardToPlay, guess, selectedId) => {
+    const turn = {
+      id: id,
+      card: cardToPlay,
+      guess: guess,
+      selected: selectedId
+    }
+
+    const jsonTurn = JSON.stringify(turn)
+    this.state.action.send('/app/take-turn', {}, jsonTurn)
+  }
+
+  findPlayer = (userId, game) => {
     for (let player of game.players){
       if (userId === player.externalId){
         return player
@@ -30,44 +80,128 @@ class GameView extends Component{
     return null
   }
 
+  handleClickSelected = (e) => {
+    e.preventDefault();
+    const selectedPlayerId = parseInt(e.target.value, 0);
+
+    if (this.state.cardToPlay === 1){
+      this.setState({
+        selectedPlayerId: selectedPlayerId,
+        makeGuess: true,
+        selectPlayer: false
+      })
+    } else {
+      this.setState({ selectPlayer: false })
+      this.sendTurn(this.state.user.externalId, this.state.cardToPlay, 0, selectedPlayerId)
+    }
+  }
+
+  handleTurnBtnClick = (e) => {
+    // when player clicks button, assesses whether they need to then select a player or not
+    e.preventDefault();
+    const cardToPlay = parseInt(e.target.value, 0)
+    if (cardToPlay === 1 || cardToPlay === 2 || cardToPlay === 3 || cardToPlay === 5 || cardToPlay === 6){
+      this.setState({
+        selectPlayer: true,
+        cardToPlay: cardToPlay
+      })
+    } else {
+      this.sendTurn(this.state.user.externalId, cardToPlay, 0, this.state.user.externalId)
+    }
+  }
+
+  handleGuessBtn = () => {
+    let { user, cardToPlay, selectedPlayerId } = this.state;
+    this.setState({
+      makeGuess: false,
+      selectPlayer: false
+    })
+
+    this.sendTurn(user.externalId, cardToPlay, this.state.guess, selectedPlayerId)
+  }
+
+  guessInputOnChange = (e) => {
+    const guess = parseInt(e.target.value, 0)
+    this.setState({ guess: guess })
+  }
+
+  handleNewRoundBtn = () => {
+    this.state.action.send('/app/new-round', {}, "new round")
+  }
+
+  roundStartBtn = () => {
+    if (this.state.game.roundOver === true && this.state.playerCount >= 2){
+      return (<button onClick={this.handleNewRoundBtn}>Start Round</button>)
+    } else if (this.state.playerCount < 2){
+      return (<p>Waiting for more players... </p>)
+    }
+  }
+
   render(){
     if (this.state.game === null) return null;
-    console.log('render game', this.state);
     if (this.state.user === null) return <Redirect to="/new-player"/>
-
-    const handleNewRoundBtn = () => {
-      const helper = new RequestHelper();
-      const newRoundNumber = this.state.roundNumber + 1;
-      helper.startRound().then(res => this.setState({
-        roundNumber: newRoundNumber,
-        game: res
-      }))
-    }
-
-    let roundStartBtn;
-    if (this.state.game.roundOver === true && this.state.game.players.length >= 2){
-      roundStartBtn = (<button onClick={handleNewRoundBtn}>Start Round</button>)
-    } else if (this.state.game.players.length < 2){
-      roundStartBtn = (<p>Waiting for more players.. </p>)
-    }
-
-    const allPlayersList = this.state.game.players.map(player => {
-      let activeSymbol = null;
-      if (player.activeTurn === true) activeSymbol = "*TURN*"
-      return (<li key={player.externalId}>{player.name}{activeSymbol}</li>)
-    })
 
     return (
       <div>
-        <h1>Welcome {this.state.user.name}</h1>
-        <p>You are holding a {this.state.user.hand[0]} and a {this.state.user.hand[1]}</p>
-        {roundStartBtn}
-        <p>The players are:</p>
-        <ul>
-          {allPlayersList}
-        </ul>
+        <div>
+          <UserDisplay name={this.state.user.name} numberOfRounds={this.state.game.numberOfRounds} />
+        </div>
+
+        <div>
+          <UserActionPanel
+            hand={this.state.user.hand}
+            selectPlayer={this.state.selectPlayer}
+            isActiveTurn={this.state.user.activeTurn}
+            isMakeGuess={this.state.makeGuess}
+            players={this.state.game.players}
+            turnBtnHandler={this.handleTurnBtnClick}
+            guessBtnHandler={this.handleGuessBtn}
+            guessInputOnChange={this.guessInputOnChange}
+            selectPlayerHandler= {this.handleClickSelected}
+            roundOver={this.state.game.roundOver}
+            roundNumber={this.state.game.numberOfRounds}
+            newRoundBtnHandler={this.handleNewRoundBtn}
+          />
+          <DeckDisplay hand={this.state.user.hand} deckCount={this.state.game.deck.numberOfCards} roundOver={this.state.game.roundOver}/>
+          <p>In game:</p>
+          <ul>
+            <PlayersList players={this.state.game.players} roundOver={this.state.game.roundOver}/>
+          </ul>
+        </div>
       </div>
     )
+
+    // code to show the previous move
+    // let prevPlayer = null;
+    // if (this.state.game.prevMovePlayerIdCard){
+    //   prevPlayer = this.findPlayer(Object.keys(this.state.game.prevMovePlayerIdCard)[0], this.state.game)
+    // }
+    // console.log('prevPlayer', prevPlayer);
+    //
+    // let prevMove = null;
+    // if (this.state.game.prevMovePlayerIdCard){
+    //   prevMove = this.state.game.prevMovePlayerIdCard[prevPlayer.externalId]
+    // }
+    // console.log('prevmove', prevMove);
+    //
+    // let prevMoveVictim = null;
+    // if (this.state.game.prevMoveVictimIdGuess) {
+    //   prevMoveVictim = this.findPlayer(Object.keys(this.state.game.prevMoveVictimIdGuess), this.state.game) || null;
+    // }
+    // console.log('prevMoveVictim', prevMoveVictim);
+    //
+    // const prevMoveGuess = this.state.game.prevMoveVictimIdGuess || null;
+    // console.log('prevMoveVictimGuess', prevMoveGuess);
+
+    // let showPrevMove = null;
+    // if (this.state.game.prevPlayer){
+    //   showPrevMove = (
+    //     <div>
+    //       <p>{prevPlayer.name} played a {prevMove} on {prevMoveVictim.name} and guessed a {prevMoveGuess}</p>
+    //     </div>
+    //   )
+    // }
+
   }
 }
 
