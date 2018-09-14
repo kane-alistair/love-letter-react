@@ -47,15 +47,10 @@ class GameView extends Component{
       //updates player count so start round button shows for all players
       this.state.action.send('/app/game-state')
     })
-  }
-  
-  componentWillUnmount() {
+
+    //remove player if they close window
     window.addEventListener("beforeunload", () => {
-      let userId = null;
-      if (this.state.user){
-        userId = this.state.user.externalId
-      }
-      console.log('removing player', userId);
+      const userId = this.state.user.externalId
       this.state.action.send('/app/remove-player', {}, userId)
     })
   }
