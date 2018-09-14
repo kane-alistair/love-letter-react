@@ -30,10 +30,11 @@ class GameView extends Component{
   }
 
   componentDidMount() {
-    const storedId = localStorage.getItem('storedId')
+    const storedId = parseInt(localStorage.getItem('storedId'), 0)
     this.setState({ playerId: storedId })
-
-    this.state.action.connect({}, () => {
+    console.log('cdm', storedId);
+    this.state.action.connect({}, (frame) => {
+      console.log('connected to', frame);
       this.state.action.subscribe('/topic/game', (res) => {
         let gameState = JSON.parse(res.body)
         this.setState({
@@ -47,10 +48,16 @@ class GameView extends Component{
       this.state.action.send('/app/game-state')
     })
   }
-
+  
   componentWillUnmount() {
-    // this.state.action.send('/app/remove-player', {}, this.state.user.externalId)
-    
+    window.addEventListener("beforeunload", () => {
+      let userId = null;
+      if (this.state.user){
+        userId = this.state.user.externalId
+      }
+      console.log('removing player', userId);
+      this.state.action.send('/app/remove-player', {}, userId)
+    })
   }
 
   getActivePlayer = game => {
@@ -138,8 +145,19 @@ class GameView extends Component{
   }
 
   render(){
+    console.log('renderUser', this.state.user);
     if (this.state.game === null) return null;
     if (this.state.user === null) return <Redirect to="/new-player"/>
+    let deckDisplay;
+
+    if (this.state.user.deckCount) deckDisplay = (
+      <div>
+      <DeckDisplay
+        hand={this.state.user.hand}
+        deckCount={this.state.game.deck.numberOfCards}
+        roundOver={this.state.game.roundOver}/>
+      </div>
+      )
 
     return (
       <div>
@@ -162,7 +180,7 @@ class GameView extends Component{
             roundNumber={this.state.game.numberOfRounds}
             newRoundBtnHandler={this.handleNewRoundBtn}
           />
-          <DeckDisplay hand={this.state.user.hand} deckCount={this.state.game.deck.numberOfCards} roundOver={this.state.game.roundOver}/>
+          {deckDisplay}
           <p>In game:</p>
           <ul>
             <PlayersList players={this.state.game.players} roundOver={this.state.game.roundOver}/>
