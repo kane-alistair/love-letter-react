@@ -14,7 +14,10 @@
   },
   "parser": "babel-eslint",
   "globals": {
-        "localStorage": true,
-        "fetch": true
-    }
+    "localStorage": true,
+    "fetch": true
+  },
+  "env": {
+    "browser": true
+  }
 }

@@ -1,24 +1,24 @@
 import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom'
+import PropType from 'prop-types'
 import RequestHelper from '../helpers/RequestHelper';
-import './GameBoard.css';
 
 class PlayerCreator extends Component {
-  state = {
-    name: null,
-    game: null,
-    submitted: false
+  constructor(props){
+    super(props)
+    this.state = {
+      name: null,
+      game: props.game,
+      submitted: false,
+      stompClient: props.stompClient
+    }
   }
 
-  componentDidMount() {
-    const helper = new RequestHelper();
-    helper.getGame().then(res => this.setState({ game: res }));
-  }
+  render() {
+    let { submitted, game } = this.state;
 
-  render(){
-    if (this.state.submitted === true) return (<Redirect to='/play'/>)
-    if (this.state.game) return this.renderCreateNewPlayerForm();
-    return null;
+    if (submitted) return (<Redirect to='/play'/>)
+    if (game) return this.renderCreateNewPlayerForm();
   }
 
   renderCreateNewPlayerForm() {
@@ -26,8 +26,7 @@ class PlayerCreator extends Component {
       this.setState({ name: e.target.value })
     }
 
-    const handleLinkClick = e => {
-      e.preventDefault()
+    const handleLinkClick = () => {
       const helper = new RequestHelper();
 
       helper.createNewPlayer(this.state.name)
@@ -45,7 +44,7 @@ class PlayerCreator extends Component {
       <div>
         <h1>Enter your name</h1>
         <input id="name-input" type="text" name="name" onChange={handleNameChange}/>
-        <a href="/newPlayer" onClick={handleLinkClick}>Start Game</a>
+        <a href="/play" onClick={handleLinkClick}>Start Game</a>
         <div id="currently-playing-container">
           <p>Currently Playing...</p>
           <ul>
@@ -57,4 +56,8 @@ class PlayerCreator extends Component {
   }
 }
 
+PlayerCreator.propTypes = {
+  game: PropType.object.isRequired,
+  stompClient: PropType.object.isRequired
+}
 export default PlayerCreator;
