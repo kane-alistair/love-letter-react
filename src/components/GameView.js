@@ -33,16 +33,17 @@ class GameView extends Component{
       playerId: storedId
     })
     //remove player if they close window
-    window.addEventListener("beforeunload", () => {
-      const userId = this.state.user.externalId
-      this.state.action.send('/app/remove-player', {}, userId)
-    })
-    this.state.action.send('/app/game-state')
+    // window.addEventListener("beforeunload", () => {
+    // const userId = this.state.user.externalId
+    //   this.state.action.send('/app/remove-player', {}, userId)
+    // })
+
+    // also need to flush localstorage too
   }
 
   render(){
-    if (this.state.playerId === null) return null;
-    if (this.state.user === null) return <Redirect to="/new-player"/>
+    if (!this.state.playerId) return null;
+    if (!this.state.user) return <Redirect to="/new-player"/>
 
     let deckDisplay;
 

@@ -15,29 +15,43 @@ class App extends Component {
 
     this.state = {
       stompClient: stompClient,
+      connected: null,
       game: null
     }
   }
 
   componentDidMount() {
-    this.state.stompClient.connect({}, () => {
-      this.state.stompClient.subscribe('/topic/game', (res) => {
+    let { stompClient } = this.state;
+
+    stompClient.connect({}, () => {
+      stompClient.subscribe('/topic/game', (res) => {
         let gameState = JSON.parse(res.body)
         this.setState({
           game: gameState
         })
       })
-      this.state.stompClient.send('/app/game-state');
+      if (stompClient.connected){
+        this.setState({
+          connected: true
+        })
+        this.state.stompClient.send('/app/game-state')
+      } else {
+        this.setState({
+          connected: false
+        })
+      }
     })
   }
 
   render() {
-    let { stompClient, game } = this.state;
-    if (!game) return null;
+    if (!this.state.connected) return null;
+    if (this.state.connected === false) return "Server down.";
 
-    const playerCreator = () => (<PlayerCreator stompClient={stompClient} game={game}/>)
-    const gameView = () => (<GameView stompClient={stompClient} game={game}/>)
-    const readyStatus = () => (<Link to={"new-player"}>Get Started</Link>)
+    let { stompClient, game } = this.state;
+
+    const playerCreator = () => <PlayerCreator stompClient={stompClient} game={game}/>
+    const gameView = () =>  <GameView stompClient={stompClient} game={game}/>
+    const readyStatus = () => <Link to="/new-player">Get Started</Link>
 
     return (
       <div className="App">
