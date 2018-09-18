@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Link, Redirect } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
 import GameView from './components/GameView';
 import PlayerCreator from './components/PlayerCreator';
 import SockJS from 'sockjs-client';
@@ -19,10 +19,6 @@ class App extends Component {
       game: null,
       userId: null
     }
-  }
-
-  handleSubmit = (userId) => {
-    this.setState({ userId: userId })
   }
 
   componentDidMount() {
@@ -45,7 +41,9 @@ class App extends Component {
 
     //remove player if they close window
     window.addEventListener("beforeunload", () => {
-      stompClient.send('/app/remove-player', {}, this.state.userId)
+      let userId = 0;
+      if (this.state.userId) userId = this.state.userId
+      stompClient.send('/app/remove-player', {}, userId)
     })
   }
 
@@ -55,7 +53,8 @@ class App extends Component {
     if (stompClient.connected === false) return null;
     if (connected === false) return "Server down.";
 
-    const playerCreator = () => <PlayerCreator stompClient={stompClient} game={game} handleSubmit={this.handleSubmit}/>
+    const handleSubmit = (userId) => this.setState({ userId: userId })
+    const playerCreator = () => <PlayerCreator stompClient={stompClient} game={game} handleSubmit={handleSubmit}/>
     const gameView = () =>  <GameView stompClient={stompClient} game={game}/>
     const readyStatus = () => <Link to="/new-player">Get Started</Link>
 

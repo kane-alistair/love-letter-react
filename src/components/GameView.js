@@ -20,7 +20,7 @@ class GameView extends Component{
 
   componentDidMount() {
     console.log('gv cdm');
-    let { game, stompClient } = this.props;
+    let { game } = this.props;
 
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
     this.setupPlayerState(storedId, game.players)

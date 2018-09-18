@@ -64,8 +64,8 @@ class PlayerCreator extends Component {
 PlayerCreator.propTypes = {
   game: PropType.object,
   stompClient: PropType.object.isRequired,
-  userId: PropType.integer,
-  handleSubmit: PropType.object
+  userId: PropType.number,
+  handleSubmit: PropType.func
 }
 
 export default PlayerCreator;
