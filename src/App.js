@@ -16,8 +16,13 @@ class App extends Component {
     this.state = {
       stompClient: stompClient,
       connected: null,
-      game: null
+      game: null,
+      userId: null
     }
+  }
+
+  handleSubmit = (userId) => {
+    this.setState({ userId: userId })
   }
 
   componentDidMount() {
@@ -37,6 +42,11 @@ class App extends Component {
         this.setState({ connected: false })
       }
     })
+
+    //remove player if they close window
+    window.addEventListener("beforeunload", () => {
+      stompClient.send('/app/remove-player', {}, this.state.userId)
+    })
   }
 
   render() {
@@ -45,7 +55,7 @@ class App extends Component {
     if (stompClient.connected === false) return null;
     if (connected === false) return "Server down.";
 
-    const playerCreator = () => <PlayerCreator stompClient={stompClient} game={game}/>
+    const playerCreator = () => <PlayerCreator stompClient={stompClient} game={game} handleSubmit={this.handleSubmit}/>
     const gameView = () =>  <GameView stompClient={stompClient} game={game}/>
     const readyStatus = () => <Link to="/new-player">Get Started</Link>
 

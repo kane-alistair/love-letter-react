@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Link, Redirect } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import RequestHelper from '../helpers/RequestHelper';
 import PropType from 'prop-types'
 
@@ -7,6 +7,12 @@ class PlayerCreator extends Component {
   state = {
     name: null,
     submitted: null
+  }
+
+  componentDidMount() {
+    window.addEventListener("beforeunload", () => {
+      this.props.stompClient.send('/app/remove-player', {}, this.props.userId)
+    })
   }
 
   render() {
@@ -29,7 +35,10 @@ class PlayerCreator extends Component {
       const helper = new RequestHelper();
       const playerName = this.state.name;
       helper.createNewPlayer(playerName)
-      .then(res => localStorage.setItem('storedId', JSON.parse(res)))
+      .then(res => {
+        localStorage.setItem('storedId', JSON.parse(res))
+        this.props.handleSubmit(res);
+      })
       .then(() => stompClient.send('/app/game-state'))
       .then(() => this.setState({ submitted: true }))
     }
@@ -54,7 +63,9 @@ class PlayerCreator extends Component {
 
 PlayerCreator.propTypes = {
   game: PropType.object,
-  stompClient: PropType.object.isRequired
+  stompClient: PropType.object.isRequired,
+  userId: PropType.integer,
+  handleSubmit: PropType.object
 }
 
 export default PlayerCreator;

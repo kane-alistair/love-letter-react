@@ -20,16 +20,10 @@ class GameView extends Component{
 
   componentDidMount() {
     console.log('gv cdm');
-    let { game } = this.props;
+    let { game, stompClient } = this.props;
 
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
     this.setupPlayerState(storedId, game.players)
-
-    //remove player if they close window
-    // window.addEventListener("beforeunload", () => {
-    // const userId = this.state.user.externalId
-    //   this.state.stompClient.send('/app/remove-player', {}, userId)
-    // })
 
     // also need to flush localstorage too when close
   }
