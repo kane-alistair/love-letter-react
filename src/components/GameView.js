@@ -16,19 +16,34 @@ class GameView extends Component{
     selectedPlayerId: null,
     makeGuess: false,
     cardToPlay: 0,
+    redirect: null
   }
 
   componentDidMount() {
     console.log('gv cdm');
     let { game } = this.props;
-
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
+
+    if (this.isPlayerInGame(game.players, storedId) === false) this.setState({ redirect: true})
+
     this.setupPlayerState(storedId, game.players)
 
     // also need to flush localstorage too when close
   }
 
+  isPlayerInGame(players, storedId) {
+    console.log('ipiG', players);
+    console.log('ipiG', storedId);
+
+    for (let player of players) {
+      if (player.externalId === storedId) return true;
+    }
+
+    return false;
+  }
+
   render(){
+    if (this.state.redirect) return (<Redirect to="/"/>)
     console.log('gv render', this.state);
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
     if (!storedId) return <Redirect to="/new-player"/>
@@ -83,7 +98,8 @@ class GameView extends Component{
     }
 
     setupPlayerState = (storedId, players) => {
-      console.log('sps');
+      console.log('sps storedId', storedId);
+      console.log('sps players', players);
       let user = null;
       let activePlayer = null;
 

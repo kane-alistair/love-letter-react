@@ -5,7 +5,6 @@ const UserActionPanel = ({
   selectPlayer, isActiveTurn, isMakeGuess, hand, turnBtnHandler, guessBtnHandler, guessInputOnChange,
   selectPlayerHandler, players, roundOver, roundNumber, newRoundBtnHandler
 }) => {
-
   if (roundOver){
     let roundOverHeader;
     if (roundNumber > 0) roundOverHeader = (<h2>Round Over!</h2>)
