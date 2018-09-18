@@ -9,7 +9,6 @@ import DeckDisplay from './DeckDisplay';
 class GameView extends Component{
   state = {
     guess: 0,
-    user: null,
     playerId: null,
     activePlayer: null,
     selectPlayer: false,
@@ -20,8 +19,7 @@ class GameView extends Component{
   }
 
   componentDidMount() {
-    console.log('gv cdm');
-    let { game } = this.props;
+    let { game, user } = this.props;
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
 
     if (this.isPlayerInGame(game.players, storedId) === false) this.setState({ redirect: true})
@@ -32,9 +30,6 @@ class GameView extends Component{
   }
 
   isPlayerInGame(players, storedId) {
-    console.log('ipiG', players);
-    console.log('ipiG', storedId);
-
     for (let player of players) {
       if (player.externalId === storedId) return true;
     }
@@ -48,7 +43,7 @@ class GameView extends Component{
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
     if (!storedId) return <Redirect to="/new-player"/>
 
-    let { user } = this.state;
+    let { user } = this.props;
 
     if (!user) return null;
     if (!user) return <Redirect to="/new-player"/>
@@ -65,7 +60,7 @@ class GameView extends Component{
           roundOver={game.roundOver}/>
         </div>
       )
-
+      console.log('gv user', user);
       return (
         <div>
           <div>

@@ -19,7 +19,7 @@ class PlayerCreator extends Component {
     let { game } = this.props;
     if (!game) return null;
     if (this.state.submitted) return (<Link to="/play">Click here to join game</Link>);
-    if (!game.roundOver) return ("Round in progress. Waiting for round to end");
+    // if (!game.roundOver) return ("Round in progress. Waiting for round to end");
     return this.renderCreateNewPlayerForm(game);
   }
 

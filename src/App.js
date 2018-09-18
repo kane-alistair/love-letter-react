@@ -47,15 +47,25 @@ class App extends Component {
     })
   }
 
+  findUser(userId, players) {
+    for (let player of players){
+      if (userId === player.externalId){
+        return player
+      }
+    }
+  }
+
   render() {
-    let { stompClient, game, connected } = this.state;
+    let { stompClient, game, connected, userId } = this.state;
 
     if (stompClient.connected === false) return null;
     if (connected === false) return "Server down.";
 
+    const user = this.findUser(userId, game.players);
+
     const handleSubmit = (userId) => this.setState({ userId: userId })
     const playerCreator = () => <PlayerCreator stompClient={stompClient} game={game} handleSubmit={handleSubmit}/>
-    const gameView = () =>  <GameView stompClient={stompClient} game={game}/>
+    const gameView = () =>  <GameView stompClient={stompClient} game={game} user={user}/>
     const readyStatus = () => <Link to="/new-player">Get Started</Link>
 
     return (
