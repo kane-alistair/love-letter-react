@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Link, Redirect } from 'react-router-dom';
 import GameView from './components/GameView';
 import PlayerCreator from './components/PlayerCreator';
 import SockJS from 'sockjs-client';
@@ -25,29 +25,25 @@ class App extends Component {
 
     stompClient.connect({}, () => {
       stompClient.subscribe('/topic/game', (res) => {
-        let gameState = JSON.parse(res.body)
+        let gameState = JSON.parse(res.body);
         this.setState({
           game: gameState
         })
       })
-      if (stompClient.connected){
-        this.setState({
-          connected: true
-        })
-        this.state.stompClient.send('/app/game-state')
+
+      if (stompClient.connected === true)  {
+        stompClient.send('/app/game-state')
       } else {
-        this.setState({
-          connected: false
-        })
+        this.setState({ connected: false })
       }
     })
   }
 
   render() {
-    if (!this.state.connected) return null;
-    if (this.state.connected === false) return "Server down.";
+    let { stompClient, game, connected } = this.state;
 
-    let { stompClient, game } = this.state;
+    if (stompClient.connected === false) return null;
+    if (connected === false) return "Server down.";
 
     const playerCreator = () => <PlayerCreator stompClient={stompClient} game={game}/>
     const gameView = () =>  <GameView stompClient={stompClient} game={game}/>

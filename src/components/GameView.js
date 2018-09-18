@@ -7,99 +7,104 @@ import UserActionPanel from './UserActionPanel';
 import DeckDisplay from './DeckDisplay';
 
 class GameView extends Component{
-  constructor(props){
-    super(props);
-    this.state = {
-      game: props.game,
-      guess: 0,
-      user: null,
-      playerCount: props.game.players.length,
-      playerId: null,
-      activePlayer: null,
-      selectPlayer: false,
-      selectedPlayerId: null,
-      makeGuess: false,
-      cardToPlay: 0,
-      action: props.stompClient
-    }
+  state = {
+    guess: 0,
+    user: null,
+    playerId: null,
+    activePlayer: null,
+    selectPlayer: false,
+    selectedPlayerId: null,
+    makeGuess: false,
+    cardToPlay: 0,
   }
 
   componentDidMount() {
-    const storedId = parseInt(localStorage.getItem('storedId'), 0)
-    const foundPlayer = this.findPlayer(storedId, this.state.game)
+    console.log('gv cdm');
+    let { game } = this.props;
 
-    this.setState({
-      user: foundPlayer,
-      playerId: storedId
-    })
+    const storedId = parseInt(localStorage.getItem('storedId'), 0)
+    this.setupPlayerState(storedId, game.players)
+
     //remove player if they close window
     // window.addEventListener("beforeunload", () => {
     // const userId = this.state.user.externalId
-    //   this.state.action.send('/app/remove-player', {}, userId)
+    //   this.state.stompClient.send('/app/remove-player', {}, userId)
     // })
 
-    // also need to flush localstorage too
+    // also need to flush localstorage too when close
   }
 
   render(){
-    if (!this.state.playerId) return null;
-    if (!this.state.user) return <Redirect to="/new-player"/>
+    console.log('gv render', this.state);
+    const storedId = parseInt(localStorage.getItem('storedId'), 0)
+    if (!storedId) return <Redirect to="/new-player"/>
 
+    let { user } = this.state;
+
+    if (!user) return null;
+    if (!user) return <Redirect to="/new-player"/>
+
+    let { game } = this.props;
+    let { selectPlayer, makeGuess } = this.state;
     let deckDisplay;
 
-    if (this.state.user.deckCount) deckDisplay = (
+    if (user.deckCount) deckDisplay = (
       <div>
         <DeckDisplay
-          hand={this.state.user.hand}
-          deckCount={this.state.game.deck.numberOfCards}
-          roundOver={this.state.game.roundOver}/>
+          hand={user.hand}
+          deckCount={game.deck.numberOfCards}
+          roundOver={game.roundOver}/>
         </div>
       )
 
       return (
         <div>
           <div>
-            <UserDisplay name={this.state.user.name} numberOfRounds={this.state.game.numberOfRounds} />
+            <UserDisplay name={user.name} numberOfRounds={game.numberOfRounds} />
           </div>
 
           <div>
             <UserActionPanel
-              hand={this.state.user.hand}
-              selectPlayer={this.state.selectPlayer}
-              isActiveTurn={this.state.user.activeTurn}
-              isMakeGuess={this.state.makeGuess}
-              players={this.state.game.players}
+              hand={user.hand}
+              selectPlayer={selectPlayer}
+              isActiveTurn={user.activeTurn}
+              isMakeGuess={makeGuess}
+              players={game.players}
               turnBtnHandler={this.handleTurnBtnClick}
               guessBtnHandler={this.handleGuessBtn}
               guessInputOnChange={this.guessInputOnChange}
               selectPlayerHandler= {this.handleClickSelected}
-              roundOver={this.state.game.roundOver}
-              roundNumber={this.state.game.numberOfRounds}
               newRoundBtnHandler={this.handleNewRoundBtn}
+              roundOver={game.roundOver}
+              roundNumber={game.numberOfRounds}
             />
             {deckDisplay}
             <p>In game:</p>
             <ul>
-              <PlayersList players={this.state.game.players} roundOver={this.state.game.roundOver}/>
+              <PlayersList players={game.players} roundOver={game.roundOver}/>
             </ul>
           </div>
         </div>
       )
     }
 
-    getActivePlayer = game => {
-      for (let player of game.players){
-        if (player.activeTurn === true) return player;
-      }
-    }
+    setupPlayerState = (storedId, players) => {
+      console.log('sps');
+      let user = null;
+      let activePlayer = null;
 
-    findPlayer = (userId, game) => {
-      for (let player of game.players){
-        if (userId === player.externalId){
-          return player
-        }
+      for (let player of players){
+        if (player.activeTurn === true) activePlayer = player;
+        if (player.externalId === storedId) user = player;
+        if (activePlayer && user) break;
       }
-      return null
+      console.log('foundUser', user);
+      console.log('activePlayer', activePlayer);
+
+      this.setState({
+        user: user,
+        activePlayer: activePlayer
+      })
     }
 
     sendTurn = (id, cardToPlay, guess, selectedId) => {
@@ -111,7 +116,7 @@ class GameView extends Component{
       }
 
       const jsonTurn = JSON.stringify(turn)
-      this.state.action.send('/app/take-turn', {}, jsonTurn)
+      this.props.stompClient.send('/app/take-turn', {}, jsonTurn)
     }
 
     handleClickSelected = (e) => {
@@ -160,7 +165,7 @@ class GameView extends Component{
     }
 
     handleNewRoundBtn = () => {
-      this.state.action.send('/app/new-round', {}, "new round")
+      this.props.stompClient.send('/app/new-round', {}, "new round")
     }
 
     roundStartBtn = () => {
@@ -207,7 +212,7 @@ class GameView extends Component{
   export default GameView;
 
 
-GameView.propTypes = {
-  game: PropTypes.object.isRequired,
-  stompClient: PropTypes.object.isRequired
-}
+  GameView.propTypes = {
+    game: PropTypes.object,
+    stompClient: PropTypes.object.isRequired
+  }

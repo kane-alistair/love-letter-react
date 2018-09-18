@@ -1,35 +1,36 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router-dom'
+import { Link, Redirect } from 'react-router-dom'
+import RequestHelper from '../helpers/RequestHelper';
 import PropType from 'prop-types'
 
 class PlayerCreator extends Component {
-  constructor(props){
-    super(props)
-    this.state = {
-      name: null,
-      submitted: false
-    }
+  state = {
+    name: null,
+    submitted: null
   }
 
   render() {
-    console.log('pc render', this.state);
     let { game } = this.props;
     if (!game) return null;
-    const storedId = parseInt(localStorage.getItem('storedId'), 0);
-    if (storedId) return (<Redirect to='/play'/>)
-    return this.renderCreateNewPlayerForm();
+    if (this.state.submitted) return (<Link to="/play">Click here to join game</Link>)
+    return this.renderCreateNewPlayerForm(game);
   }
 
-  renderCreateNewPlayerForm() {
-    let { game, stompClient } = this.props;
+  renderCreateNewPlayerForm(game) {
+    let { stompClient } = this.props;
 
     const handleNameChange = e => {
       this.setState({ name: e.target.value })
     }
 
-    const handleLinkClick = () => {
-      const sendableJson = JSON.stringify({ name: `${this.state.name}` })
-      stompClient.send('/app/new-player', {}, sendableJson);
+    const handleLinkClick = (e) => {
+      e.preventDefault()
+      const helper = new RequestHelper();
+      const playerName = this.state.name;
+      helper.createNewPlayer(playerName)
+      .then(res => localStorage.setItem('storedId', JSON.parse(res)))
+      .then(() => stompClient.send('/app/game-state'))
+      .then(() => this.setState({ submitted: true }))
     }
 
     const currentlyPlaying = game.players.map(player => (<li key={player.externalId}>{player.name}</li>))
@@ -38,7 +39,7 @@ class PlayerCreator extends Component {
       <div>
         <h1>Enter your name</h1>
         <input id="name-input" type="text" name="name" onChange={handleNameChange}/>
-        <a href="/play" onClick={handleLinkClick}>Start Game</a>
+        <Link to="/play" onClick={handleLinkClick}>Submit name</Link>
         <div id="currently-playing-container">
           <p>Currently Playing...</p>
           <ul>
