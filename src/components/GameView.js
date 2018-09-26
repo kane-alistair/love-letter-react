@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import PlayersList from './PlayersList';
+import PlayerHandDisplay from './PlayerHandDisplay';
 import UserDisplay from './UserDisplay';
 import UserActionPanel from './UserActionPanel';
 import DeckDisplay from './DeckDisplay';
@@ -19,7 +20,7 @@ class GameView extends Component{
   }
 
   componentDidMount() {
-    let { game, user } = this.props;
+    let { game } = this.props;
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
 
     if (this.isPlayerInGame(game.players, storedId) === false) this.setState({ redirect: true})
@@ -39,7 +40,7 @@ class GameView extends Component{
 
   render(){
     if (this.state.redirect) return (<Redirect to="/"/>)
-    console.log('gv render', this.state);
+
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
     if (!storedId) return <Redirect to="/new-player"/>
 
@@ -60,7 +61,7 @@ class GameView extends Component{
           roundOver={game.roundOver}/>
         </div>
       )
-      console.log('gv user', user);
+
       return (
         <div>
           <div>
@@ -88,13 +89,12 @@ class GameView extends Component{
               <PlayersList players={game.players} roundOver={game.roundOver}/>
             </ul>
           </div>
+          <PlayerHandDisplay hand={user.hand}/>
         </div>
       )
     }
 
     setupPlayerState = (storedId, players) => {
-      console.log('sps storedId', storedId);
-      console.log('sps players', players);
       let user = null;
       let activePlayer = null;
 
@@ -103,8 +103,6 @@ class GameView extends Component{
         if (player.externalId === storedId) user = player;
         if (activePlayer && user) break;
       }
-      console.log('foundUser', user);
-      console.log('activePlayer', activePlayer);
 
       this.setState({
         user: user,
@@ -219,5 +217,6 @@ class GameView extends Component{
 
   GameView.propTypes = {
     game: PropTypes.object,
-    stompClient: PropTypes.object.isRequired
+    stompClient: PropTypes.object.isRequired,
+    user: PropTypes.object
   }

@@ -5,7 +5,7 @@ const UserActionPanel = ({
   selectPlayer, isActiveTurn, isMakeGuess, hand, turnBtnHandler, guessBtnHandler, guessInputOnChange,
   selectPlayerHandler, players, roundOver, roundNumber, newRoundBtnHandler
 }) => {
-  console.log('uap', isActiveTurn);
+  
   if (roundOver){
     let roundOverHeader;
     if (roundNumber > 0) roundOverHeader = (<h2>Round Over!</h2>)
@@ -46,13 +46,10 @@ const UserActionPanel = ({
       )
     }
 
-    let keyNumber = 1;
 
     if (isActiveTurn){
       const hands = hand.map(card => {
-        keyNumber++;
-        if (card) return (<button onClick={turnBtnHandler} value={card} key={keyNumber}>Play {card}</button>)
-        return null;
+        if (card) return (<button onClick={turnBtnHandler} value={card}>Play {card}</button>)
       })
 
       return (
