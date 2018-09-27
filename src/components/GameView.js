@@ -23,33 +23,34 @@ class GameView extends Component{
     let { game } = this.props;
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
 
-    if (this.isPlayerInGame(game.players, storedId) === false) this.setState({ redirect: true})
-
     this.setupPlayerState(storedId, game.players)
-
-    // also need to flush localstorage too when close
   }
 
   isPlayerInGame(players, storedId) {
+    console.log('ipig players', players);
+    console.log('ipig storedId', storedId);
     for (let player of players) {
-      if (player.externalId === storedId) return true;
+      console.log('ipiG check', parseInt(player.externalId, 0) === storedId);
+      if (parseInt(player.externalId, 0) === storedId) return true;
     }
-
     return false;
   }
 
   render(){
+    let { game } = this.props;
+    // if (game.players.length === 0) return null;
+
     if (this.state.redirect) return (<Redirect to="/"/>)
 
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
     if (!storedId) return <Redirect to="/new-player"/>
+    if (!this.isPlayerInGame(game.players, storedId)) return (<Redirect to="/new-player"/>)
 
     let { user } = this.props;
 
     if (!user) return null;
     if (!user) return <Redirect to="/new-player"/>
 
-    let { game } = this.props;
     let { selectPlayer, makeGuess } = this.state;
     let deckDisplay;
 
@@ -89,7 +90,10 @@ class GameView extends Component{
               <PlayersList players={game.players} roundOver={game.roundOver}/>
             </ul>
           </div>
-          <PlayerHandDisplay hand={user.hand}/>
+          <div id="#user-action-panel">
+            {/* <TurnLog/> */}
+            <PlayerHandDisplay hand={user.hand}/>
+          </div>
         </div>
       )
     }
