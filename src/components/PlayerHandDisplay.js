@@ -8,6 +8,7 @@ const PlayerHandDisplay = ({ hand }) => {
   return(
     <div id="hand-container">
       {hand.map(cardValue => {
+        if (!cardValue) return null;
         return (
           <div className="hand-item" key={hand.indexOf(cardValue)}>
             <p key={hand.indexOf(cardValue)}>{cardValue}</p>

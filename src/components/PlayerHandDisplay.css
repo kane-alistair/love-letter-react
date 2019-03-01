@@ -1,14 +1,16 @@
 #hand-container{
+  margin-left: 40vw;
+  margin-right: 30vw;
   display: grid;
   grid-template-columns: auto auto auto;
-  background-color: #2196F3;
-  padding: 10px;
+  padding: 0.1vw;
 }
 
-#hand-item{
-  background-color: rgba(255, 255, 255, 0.8);
+.hand-item{
+  background-color: #2196F3;
+  width: 5vw;
   border: 1px solid rgba(0, 0, 0, 0.8);
   padding: 20px;
-  font-size: 30px;
+  font-size: 4vw;
   text-align: center;
 }

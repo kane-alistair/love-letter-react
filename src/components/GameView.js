@@ -3,6 +3,7 @@ import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import PlayersList from './PlayersList';
 import PlayerHandDisplay from './PlayerHandDisplay';
+import TurnLog from './TurnLog';
 import UserDisplay from './UserDisplay';
 import UserActionPanel from './UserActionPanel';
 import DeckDisplay from './DeckDisplay';
@@ -27,10 +28,7 @@ class GameView extends Component{
   }
 
   isPlayerInGame(players, storedId) {
-    console.log('ipig players', players);
-    console.log('ipig storedId', storedId);
     for (let player of players) {
-      console.log('ipiG check', parseInt(player.externalId, 0) === storedId);
       if (parseInt(player.externalId, 0) === storedId) return true;
     }
     return false;
@@ -38,13 +36,12 @@ class GameView extends Component{
 
   render(){
     let { game } = this.props;
-    // if (game.players.length === 0) return null;
 
-    if (this.state.redirect) return (<Redirect to="/"/>)
+    if (this.state.redirect) return <Redirect to="/"/>
 
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
     if (!storedId) return <Redirect to="/new-player"/>
-    if (!this.isPlayerInGame(game.players, storedId)) return (<Redirect to="/new-player"/>)
+    if (!this.isPlayerInGame(game.players, storedId)) return <Redirect to="/new-player"/>
 
     let { user } = this.props;
 
@@ -65,37 +62,35 @@ class GameView extends Component{
 
       return (
         <div>
-          <div>
-            <UserDisplay name={user.name} numberOfRounds={game.numberOfRounds} />
-          </div>
-
-          <div>
-            <UserActionPanel
-              hand={user.hand}
-              selectPlayer={selectPlayer}
-              isActiveTurn={user.activeTurn}
-              isMakeGuess={makeGuess}
-              players={game.players}
-              turnBtnHandler={this.handleTurnBtnClick}
-              guessBtnHandler={this.handleGuessBtn}
-              guessInputOnChange={this.guessInputOnChange}
-              selectPlayerHandler= {this.handleClickSelected}
-              newRoundBtnHandler={this.handleNewRoundBtn}
-              roundOver={game.roundOver}
-              roundNumber={game.numberOfRounds}
-            />
-            {deckDisplay}
-            <p>In game:</p>
-            <ul>
-              <PlayersList players={game.players} roundOver={game.roundOver}/>
-            </ul>
-          </div>
-          <div id="#user-action-panel">
-            {/* <TurnLog/> */}
+          <UserDisplay name={user.name} numberOfRounds={game.numberOfRounds} />
+          <UserActionPanel
+            hand={user.hand}
+            selectPlayer={selectPlayer}
+            isActiveTurn={user.activeTurn}
+            isMakeGuess={makeGuess}
+            players={game.players}
+            turnBtnHandler={this.handleTurnBtnClick}
+            guessBtnHandler={this.handleGuessBtn}
+            guessInputOnChange={this.guessInputOnChange}
+            selectPlayerHandler= {this.handleClickSelected}
+            newRoundBtnHandler={this.handleNewRoundBtn}
+            roundOver={game.roundOver}
+            roundNumber={game.numberOfRounds}/>
+          {deckDisplay}
+          <p>In game:</p>
+          <ul>
+            <PlayersList players={game.players} roundOver={game.roundOver}/>
+          </ul>
+          <div id="#action-panel">
             <PlayerHandDisplay hand={user.hand}/>
+            <TurnLog events={this.displayTurnEvents}/>
           </div>
         </div>
       )
+    }
+
+    displayTurnEvents = () => {
+      
     }
 
     setupPlayerState = (storedId, players) => {

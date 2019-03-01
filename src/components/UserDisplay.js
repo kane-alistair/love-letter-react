@@ -7,11 +7,11 @@ const UserDisplay = ({ name, numberOfRounds }) => {
       <h1>{name}</h1>
       <p>Rounds Played: {numberOfRounds}</p>
     </div>);
-};
+  };
 
-UserDisplay.propTypes = {
-  name: PropTypes.string.isRequired,
-  numberOfRounds: PropTypes.number.isRequired
-};
+  UserDisplay.propTypes = {
+    name: PropTypes.string.isRequired,
+    numberOfRounds: PropTypes.number.isRequired
+  };
 
-export default UserDisplay;
+  export default UserDisplay;
