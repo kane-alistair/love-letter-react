@@ -1,17 +1,30 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const TurnLog = ({ events }) => {
+const TurnLog = ({ events, players, findPlayerById }) => {
   if (!events) return null;
   if (events.length === 0) return null;
 
+  const typeOfMove = ({ id, selected, card }) => {
+    const actor = findPlayerById(id, players);
+    const victim = findPlayerById(selected, players);
+
+    if (actor === victim){
+      return <p>{actor.name} played a {card}</p>
+    } else {
+      return <p>{actor.name} played a {card} on {victim.name}</p>
+    }
+  }
+
+  const moveLog = events.map(event => (
+    <div className="event-container">
+    {typeOfMove(event)}
+    </div>
+  ))
+
   return(
-    <div>
-      {events.map(event => (
-        <div className="event-container" key="3">
-          <p key="1">{event.turnTaker} played a {event.card} on {event.selectedPlayer}</p>
-        </div>
-      ))}
+    <div id="turn-log-container">
+    {moveLog}
     </div>
   )
 };

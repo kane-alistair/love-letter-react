@@ -17,31 +17,29 @@ class GameView extends Component{
     selectedPlayerId: null,
     makeGuess: false,
     cardToPlay: 0,
-    redirect: null
+    redirect: null,
   }
 
   componentDidMount() {
     let { game } = this.props;
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
 
-    this.setupPlayerState(storedId, game.players)
+    this.setupPlayerState(storedId, game.players);
   }
 
-  isPlayerInGame(players, storedId) {
+  findPlayerById(id, players) {
     for (let player of players) {
-      if (parseInt(player.externalId, 0) === storedId) return true;
+      if (player.externalId === id) return player;
     }
-    return false;
   }
 
   render(){
     let { game } = this.props;
-
     if (this.state.redirect) return <Redirect to="/"/>
 
     const storedId = parseInt(localStorage.getItem('storedId'), 0)
     if (!storedId) return <Redirect to="/new-player"/>
-    if (!this.isPlayerInGame(game.players, storedId)) return <Redirect to="/new-player"/>
+    if (!this.findPlayerById(storedId, game.players)) return <Redirect to="/new-player"/>
 
     let { user } = this.props;
 
@@ -83,14 +81,10 @@ class GameView extends Component{
           </ul>
           <div id="#action-panel">
             <PlayerHandDisplay hand={user.hand}/>
-            <TurnLog events={this.displayTurnEvents}/>
+            <TurnLog events={game.turnEvents} players={game.players} findPlayerById={this.findPlayerById}/>
           </div>
         </div>
       )
-    }
-
-    displayTurnEvents = () => {
-      
     }
 
     setupPlayerState = (storedId, players) => {
@@ -138,7 +132,7 @@ class GameView extends Component{
     }
 
     handleTurnBtnClick = (e) => {
-      // when player clicks button, assesses whether they need to then select a player or not
+      // when player clicks button, assesses whether they then need to select a player or not
       e.preventDefault();
       const cardToPlay = parseInt(e.target.value, 0)
       if (cardToPlay === 1 || cardToPlay === 2 || cardToPlay === 3 || cardToPlay === 5 || cardToPlay === 6){
@@ -178,38 +172,6 @@ class GameView extends Component{
       }
     }
   }
-
-
-  // code to show the previous move
-  // let prevPlayer = null;
-  // if (this.state.game.prevMovePlayerIdCard){
-  //   prevPlayer = this.findPlayer(Object.keys(this.state.game.prevMovePlayerIdCard)[0], this.state.game)
-  // }
-  // console.log('prevPlayer', prevPlayer);
-  //
-  // let prevMove = null;
-  // if (this.state.game.prevMovePlayerIdCard){
-  //   prevMove = this.state.game.prevMovePlayerIdCard[prevPlayer.externalId]
-  // }
-  // console.log('prevmove', prevMove);
-  //
-  // let prevMoveVictim = null;
-  // if (this.state.game.prevMoveVictimIdGuess) {
-  //   prevMoveVictim = this.findPlayer(Object.keys(this.state.game.prevMoveVictimIdGuess), this.state.game) || null;
-  // }
-  // console.log('prevMoveVictim', prevMoveVictim);
-  //
-  // const prevMoveGuess = this.state.game.prevMoveVictimIdGuess || null;
-  // console.log('prevMoveVictimGuess', prevMoveGuess);
-
-  // let showPrevMove = null;
-  // if (this.state.game.prevPlayer){
-  //   showPrevMove = (
-  //     <div>
-  //       <p>{prevPlayer.name} played a {prevMove} on {prevMoveVictim.name} and guessed a {prevMoveGuess}</p>
-  //     </div>
-  //   )
-  // }
 
   export default GameView;
 
