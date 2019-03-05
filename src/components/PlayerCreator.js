@@ -1,71 +1,126 @@
 import React, { Component } from 'react';
-import { Link } from 'react-router-dom'
 import RequestHelper from '../helpers/RequestHelper';
 import PropType from 'prop-types'
+import SockJS from 'sockjs-client';
+import Stomp from 'stompjs';
+import GameView from './GameView';
 
 class PlayerCreator extends Component {
-  state = {
-    name: null,
-    submitted: null
+  constructor(props){
+    super(props);
+    let stompClient, sock;
+    sock = new SockJS('http://localhost:8080/game');
+    stompClient = Stomp.over(sock);
+
+    this.state = {
+      name: null,
+      submitted: null,
+      stompClient: stompClient,
+      connected: true,
+      game: null,
+      userId: null
+    }
+
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleLinkClick = this.handleLinkClick.bind(this);
+    this.gameView = this.gameView.bind(this);
+    this.findPlayerById = this.findPlayerById.bind(this);
   }
 
   componentDidMount() {
+    let { stompClient } = this.state;
+    stompClient.connect({}, () => {
+      stompClient.subscribe('/topic/game', (res) => {
+        const gameState = JSON.parse(res.body);
+        this.setState({
+          game: gameState
+        })
+      })
+
+      if (stompClient.connected === true)  {
+        stompClient.send('/app/game-state')
+      } else {
+        this.setState({ connected: false })
+      }
+    })
+
     window.addEventListener("beforeunload", () => {
-      this.props.stompClient.send('/app/remove-player', {}, this.props.userId)
+      stompClient.send('/app/remove-player', {}, this.state.userId)
     })
   }
 
   render() {
-    let { game } = this.props;
+    let { stompClient, game, userId, name } = this.state;
+    console.log('r', game);
+
+    if (stompClient.connected === false) return "Server down.";
     if (!game) return null;
-    if (this.state.submitted) return (<Link to="/play">Click here to join game</Link>);
-    // if (!game.roundOver) return ("Round in progress. Waiting for round to end");
+    if (this.state.submitted && game.players.length > 0) return (this.gameView());
+
     return this.renderCreateNewPlayerForm(game);
   }
 
+  gameView() {
+    return <GameView
+    stompClient={this.state.stompClient}
+    game={this.state.game}
+    userId={this.state.userId}
+    findPlayerById={this.findPlayerById}
+    />
+  }
+
+  findPlayerById(id, players) {
+    console.log('oi', id, players);
+    for (let player of players) {
+      if (player.externalId === id) return player;
+    }
+  }
+
+  handleSubmit(userId){
+    this.setState({
+      userId: userId,
+    })
+  }
+
+  handleLinkClick(e) {
+    e.preventDefault()
+    let { name, stompClient } = this.state;
+
+    const helper = new RequestHelper();
+    helper.createNewPlayer(name)
+    .then(res => {
+      localStorage.setItem('storedId', JSON.parse(res))
+      this.handleSubmit(res);
+    })
+    .then(() => {
+      stompClient.send('/app/game-state');
+      setTimeout(this.setState({ submitted: true }), 4000);
+    })
+  }
+
   renderCreateNewPlayerForm(game) {
-    let { stompClient } = this.props;
+    let { stompClient, name } = this.state;
 
     const handleNameChange = e => {
       this.setState({ name: e.target.value })
-    }
-
-    const handleLinkClick = (e) => {
-      e.preventDefault()
-      const helper = new RequestHelper();
-      const playerName = this.state.name;
-      helper.createNewPlayer(playerName)
-      .then(res => {
-        localStorage.setItem('storedId', JSON.parse(res))
-        this.props.handleSubmit(res);
-      })
-      .then(() => stompClient.send('/app/game-state'))
-      .then(() => this.setState({ submitted: true }))
     }
 
     const currentlyPlaying = game.players.map(player => (<li key={player.externalId}>{player.name}</li>))
 
     return(
       <div>
-        <h1>Enter your name</h1>
-        <input id="name-input" type="text" name="name" onChange={handleNameChange}/>
-        <Link to="/play" onClick={handleLinkClick}>Submit name</Link>
-        <div id="currently-playing-container">
-          <p>Currently Playing...</p>
-          <ul>
-            {currentlyPlaying}
-          </ul>
-        </div>
+      <h1>Enter your name</h1>
+      <input id="name-input" type="text" name="name" onChange={handleNameChange} autoFocus/>
+      <button onClick={this.handleLinkClick} id="name-submit-link">Submit name</button>
+      <div id="currently-playing-container">
+      <p>Currently Playing...</p>
+      <ul>
+      {currentlyPlaying}
+      </ul>
+      </div>
       </div>
     )
   }
-}
-
-PlayerCreator.propTypes = {
-  game: PropType.object,
-  stompClient: PropType.object.isRequired,
-  userId: PropType.number,
-  handleSubmit: PropType.func
 }
 
 export default PlayerCreator;
