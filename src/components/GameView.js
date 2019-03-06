@@ -19,21 +19,17 @@ class GameView extends Component{
     redirect: null,
   }
 
-  componentDidMount() {
-    let { game } = this.props;
-
-    const storedId = parseInt(localStorage.getItem('storedId'), 0)
-
-    this.setupPlayerState(storedId, game.players);
+  static getDerivedStateFromProps(nextProps, prevState){
+    if(!nextProps.user) {
+      nextProps.toggleSubmitState(false);
+    }
+    return {prevState: prevState}
   }
 
+
   render(){
-    let { game } = this.props;
-    let { user } = this.state;
-
-    const storedId = parseInt(localStorage.getItem('storedId'), 0)
-
-    if (!user) return 'No user';
+    let { game, user, toggleSubmitState } = this.props;
+    if (!user) return null;
 
     let { selectPlayer, makeGuess } = this.state;
     let deckDisplay;
@@ -65,31 +61,13 @@ class GameView extends Component{
       roundNumber={game.numberOfRounds}/>
       {deckDisplay}
       <p>In game:</p>
-      <ul>
       <PlayersList players={game.players} roundOver={game.roundOver}/>
-      </ul>
       <div id="#action-panel">
       <PlayerHandDisplay hand={user.hand}/>
-      <TurnLog events={game.turnEvents} players={game.players} findPlayerById={this.findPlayerById}/>
+      <TurnLog events={game.turnEvents} players={game.players}/>
       </div>
       </div>
     )
-  }
-
-  setupPlayerState = (storedId, players) => {
-    let user = null;
-    let activePlayer = null;
-
-    for (let player of players){
-      if (player.activeTurn === true) activePlayer = player;
-      if (player.externalId === storedId) user = player;
-      if (activePlayer && user) break;
-    }
-
-    this.setState({
-      user: user,
-      activePlayer: activePlayer
-    })
   }
 
   sendTurn = (id, cardToPlay, guess, selectedId) => {

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 const UserDisplay = ({ name, numberOfRounds }) => {
   return (
     <div>
-      <h1>{name}</h1>
+      <h1 id='username-header'>{name}</h1>
       <p>Rounds Played: {numberOfRounds}</p>
     </div>);
   };
