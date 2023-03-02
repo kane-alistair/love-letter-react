@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "cypress": "^3.1.5",
+    "cypress": "^12.7.0",
     "prop-types": "^15.6.2",
     "react": "^16.4.2",
     "react-bootstrap": "^0.32.4",
